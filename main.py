@@ -59,7 +59,7 @@ def get_groups_info(id_user):
     params = {
         'user_id': id_user,
         'access_token': Token_param,
-        'extended': '0',
+        'extended': '1',
         'v': Version_param
      }
     response = requests.get('https://api.vk.com/method/groups.get', params)
@@ -69,6 +69,7 @@ def get_groups_info(id_user):
     print('.')
     # print(response.json())
     groups = response.json()['response']['items']
+    # print(groups)
     return groups
 
 
@@ -79,24 +80,29 @@ def intersect_groups(id_user, list_of_users):
         if someone_groups is None:
             continue
         if i == 0:
-            common_groups = set(someone_groups)
-        common_groups = common_groups.union(set(someone_groups))
+            common_groups = set([group['id'] for group in someone_groups])
+            continue
+        common_groups = common_groups.union(set([group['id'] for group in someone_groups]))
         time.sleep(0.3)
     user_groups = get_groups_info(id_user)
-    secret_groups = [group for group in user_groups if group not in common_groups]
+    secret_groups = [group for group in user_groups if group['id'] not in common_groups]
     # not_secret_groups = [group for group in user_groups if group in common_groups]
     # print(len(secret_groups))
     # print(len(not_secret_groups))
     # print(len(user_groups))
+    print(secret_groups)
     return secret_groups
 
 
 def save_to_file(groups):
     dict_gr = dict()
-    dict_gr["secret_groups"] = {}
+    list_gr = []
     dict_gr["count"] = len(groups)
-    for i in range(1, len(groups)):
-        dict_gr["secret_groups"][i] = groups[i]
+    for i in range(0, len(groups)):
+        dict_one_gr = dict()
+        dict_one_gr[groups[i]['id']] = groups[i]['name']
+        list_gr.append(dict_one_gr)
+    dict_gr["secret_groups"] = list_gr
     with open("secret vk groups.json", "w", encoding="utf8") as file:
         json.dump(dict_gr, file, indent=2, ensure_ascii=False)
 
